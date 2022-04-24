@@ -8,20 +8,24 @@ namespace Domain
 {
     public class Man : Human
     {
-        public Man(string firstName, string lastName, DateTime dateOfBirth) : base(firstName, lastName, dateOfBirth) { }
+        public Man(string firstName, string lastName, DateTime dateOfBirth, int currentIndex) 
+            : base(firstName, lastName, dateOfBirth, currentIndex) { }
 
-        protected override void GeneratePESEL()
+        protected override void GeneratePESEL(int currentIndex)
         {
-            PESEL = DateOfBirth.ToString("yyyy-MM-dd").Replace("-", "") + OddNumbers();
+            var datePart = PeselLogic.GenererateDatePart(DateOfBirth);
+            if (datePart == null) PESEL = null;
+            var pesel = $"{datePart}{PeselLogic.GenererateOrderPart(currentIndex)}{OddNumber()}";
+            PESEL = $"{pesel}{PeselLogic.GenererateControlDigit(pesel)}";
         }
 
-        private string OddNumbers()
+        private string OddNumber()
         {
             Random random = new();
-            int digits = random.Next(100, 201);
+            int digits = random.Next(1, 10);
             while (digits % 2 == 0)
             {
-                digits = random.Next(100, 201);
+                digits = random.Next(1, 10);
             }
 
             return digits.ToString();
