@@ -27,9 +27,6 @@ namespace Domain
             {
                 digits = random.Next(1, 10);
             }
-
-            // test
-            return 2.ToString();
             
             return digits.ToString();
         }

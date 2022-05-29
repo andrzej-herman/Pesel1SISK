@@ -40,62 +40,47 @@
 
 @code {
 
+    List<Citizen> citizens;
     CitizenData data = new CitizenData();
+    protected override async Task OnInitializedAsync()
+    {
+        var json = await localStorage.GetItemAsStringAsync("pesel1sisk");
+        if (json == null)
+            citizens = new List<Citizen>();
+        else
+            citizens = JsonConvert.DeserializeObject<List<Citizen>>(json);
+    }
+
 
     async Task SaveCitizen()
     {
-        // walidacja danych
         if (!ValidateData(out string error))
         {
-            var message = new NotificationMessage()
+            var messageError = new NotificationMessage()
                 {
                     Severity = NotificationSeverity.Error,
                     Summary = null,
                     Detail = error
                 };
 
-            notificationService.Notify(message);
+            notificationService.Notify(messageError);
             return;
         }
 
-
-        // sprwdzanie czy istnieje lista obywateli
-        int currentCitizenIndex = 0;
-        List<Man> mans = new List<Man>();
-        List<Woman> womans = new List<Woman>();
-
-
-        var listMan = await localStorage.GetItemAsync<string>("siskMans");
-        var listWoman = await localStorage.GetItemAsync<string>("siskWomans");
-
-        if (listMan != null)
-        {
-            mans = JsonConvert.DeserializeObject<List<Man>>(listMan);
-            currentCitizenIndex = mans.Count;
-        }
-
-        if (listWoman != null)
-        {
-            womans = JsonConvert.DeserializeObject<List<Woman>>(listWoman);
-            currentCitizenIndex = womans.Count;
-        }
-
-
-        // zapis obywatela
-        if (data.Sex == 1)
-        {
-            var woman = new Woman(data.FirstName, data.LastName, data.DateOfBirth, currentCitizenIndex);
-            womans.Add(woman);
-            var listToSave = JsonConvert.SerializeObject(womans);
-            await localStorage.SetItemAsync<string>("siskWomans", listToSave);
-        }
-        else
-        {
-            var man = new Man(data.FirstName, data.LastName, data.DateOfBirth, currentCitizenIndex);
-            mans.Add(man);
-            var listToSave = JsonConvert.SerializeObject(mans);
-            await localStorage.SetItemAsync<string>("siskMans", listToSave);
-        }
+        int currentCitizenIndex = citizens.Count == 0 ? 0 : citizens.Count;
+        var citizen = new Citizen(data.FirstName, data.LastName, data.DateOfBirth, data.Sex);
+        citizen.GeneratePESEL(currentCitizenIndex);
+        citizens.Add(citizen);
+        var json = JsonConvert.SerializeObject(citizens);
+        await localStorage.SetItemAsStringAsync("pesel1sisk", json);
+        var message = new NotificationMessage()
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = null,
+                Detail = "Zapisano obywatela i nadano numer PESEL"
+            };
+        notificationService.Notify(message);
+        data = new CitizenData();
     }
 
 

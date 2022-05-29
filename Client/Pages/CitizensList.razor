@@ -1,3 +1,65 @@
 ﻿@page "/citizens"
+@inject ILocalStorageService localStorage
 <PageTitle>Rejestracja obywateli</PageTitle>
 <h1>Lista zarejestrowanych osób</h1>
+<br/>
+@if (citizens != null)
+{
+    @if (citizens.Any())
+    {
+       <RadzenDataGrid AllowFiltering="true" AllowColumnResize="false" FilterMode="FilterMode.Simple" AllowSorting="true" PageSize="25" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+        Data="@citizens" TItem="Citizen" LogicalFilterOperator="LogicalFilterOperator.Or">
+        <Columns>
+            <RadzenDataGridColumn TItem="Citizen" Property="FullName" Title="Nazwisko i Imię" Width="180px" Sortable="true" Filterable="true" />
+            <RadzenDataGridColumn TItem="Citizen" Property="DisplayDateOfBirth" Title="Data urodzenia" Width="100px" Sortable="true" Filterable="true" />
+            <RadzenDataGridColumn TItem="Citizen" Property="PESEL" Title="PESEL" Width="100px" Sortable="false" Filterable="false" />
+            <RadzenDataGridColumn TItem="Citizen" Title="Płeć" Width="60px" Sortable="false" Filterable="false">
+                <Template Context="data">
+                    @if (data.Sex == 1)
+                    {
+                        <RadzenImage Path="images/female-icon.png" style="width: 24px; height: 24px;" />
+                    }
+                    else
+                    {
+                        <RadzenImage Path="images/male-icon.png" style="width: 24px; height: 24px;" />
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Citizen" Width="120px" Sortable="false" Filterable="false">
+                <Template Context="data">
+                    <RadzenButton Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Primary" Click="() => GenerujAktUrodzenia(data.PESEL)">Pobierz akt urodzenia</RadzenButton>
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+    }
+    else
+    {
+        <p>Brak zarejestrowanych obywateli</p>
+    }
+}
+else
+{
+    <p>Trwa ładowanie zarejestrowanch obywateli ...</p>
+}
+
+
+
+
+
+@code {
+    IEnumerable<Citizen> citizens;
+    protected override async Task OnInitializedAsync()
+    {
+        var json = await localStorage.GetItemAsStringAsync("pesel1sisk");
+        if (json == null)
+            citizens = new List<Citizen>();
+        else
+            citizens = JsonConvert.DeserializeObject<List<Citizen>>(json).OrderBy(x => x.LastName);
+    }
+
+    void GenerujAktUrodzenia(string pesel)
+    {
+        var citizen = citizens.FirstOrDefault(x => x.PESEL == pesel);
+    }
+}
